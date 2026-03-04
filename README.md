@@ -13,7 +13,7 @@ The AI learns to play Snake by evolving neural network weights across generation
 
 ## Project Structure
 
-```
+```text
 Snake/
 ├── train.c / train.h       # Neuroevolution algorithm and neural network
 ├── gui.c / gui.h            # Raylib game rendering and logic
