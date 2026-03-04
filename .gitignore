@@ -1,0 +1,24 @@
+# IDE files
+.vscode/
+.idea/
+
+# Build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+main_train
+main_play
+
+# Build directories
+build/
+bin/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Makefiles (if system-specific)
+Makefile
