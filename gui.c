@@ -14,6 +14,7 @@
 Rectangle grid = {0, 0, SCREEN_WIDTH, CANVAS_SIZE * GRID_SIZE};
 Rectangle bottom = {0, GRID_HEIGHT * GRID_SIZE, SCREEN_WIDTH, BOTTOM_HEIGHT};
 
+// Get all the boxes in the grid as a list of rectangles
 Rectangle* GetBoxes(){
     Rectangle* pos = malloc(sizeof(*pos) * GRID_HEIGHT * GRID_WIDTH);
 
@@ -35,10 +36,10 @@ Rectangle* GetBoxes(){
 }
 
 
-void start_game(SnakeGame* game){
+void start_game(SnakeGame* game, unsigned int* seed){
     memset(game->body, -1, MAX_SNAKE * sizeof(Position));
-    game->head = (Position){5 + rand() % 20, 5 + rand() % 10};
-    game->direction = 1 + rand() % 4;
+    game->head = (Position){5 + rand_r(seed) % 20, 5 + rand_r(seed) % 10};
+    game->direction = 1 + rand_r(seed) % 4;
     game->nextDirection = game->direction;
     game->snake_size = 3;
     game->lost = 0;
@@ -46,21 +47,20 @@ void start_game(SnakeGame* game){
     game->score = 0;
     game->steps_alive = 0;
     game->move_speed = 5;
-    game->food = (Position){rand() % GRID_WIDTH, rand() % GRID_HEIGHT};
+    game->food = (Position){rand_r(seed) % GRID_WIDTH, rand_r(seed) % GRID_HEIGHT};
 }
 
-// if(size_of_list < length)
-// append and size++
-// else
-// append og remove last element
 
+// Adds head and returns 1 if it touched itself
 bool add_head(int x, int y, int* snakeSize, Position* snake_list){
-    for(int i = (*snakeSize); i > 0; i--){
-        snake_list[i] = snake_list[i-1];  // moves every item one step to the right
+    // moves every item one step to the right
+    for(int i = (*snakeSize) - 1; i > 0; i--){
+        snake_list[i] = snake_list[i-1];  
         if(snake_list[i].x == x && snake_list[i].y == y){
             return 1;
         }
     }
+    // Make the new first the new positions
     snake_list[0] = (Position){x, y};
     return 0;
 }
@@ -70,8 +70,9 @@ bool add_head(int x, int y, int* snakeSize, Position* snake_list){
 void update_game(SnakeGame* game){
     game->direction = game->nextDirection;
     game->steps_alive++;
-    
+    // Here if he new step is itself the it dies else move there
     switch(game->direction){
+        // Numbers go clocwise starting from up
         case 1:
             game->lost = add_head(game->head.x, game->head.y, &game->snake_size, game->body);
             if(!game->lost){
@@ -98,16 +99,19 @@ void update_game(SnakeGame* game){
             }
             break;
     }
+
     // FOOD
     bool valid_food = 0;
 
+    // If the head is pos = food pos
     if(game->head.x == game->food.x && game->head.y == game->food.y){
         game->snake_size++;
-        game->move_speed *= 1.04f;
         game->score++;
+        game->move_speed *= 1.04f;
         if(game->move_speed > MAX_SPEED){
             game->move_speed = MAX_SPEED;
         }
+        // Make sure the food isnt placed on the body of the snake
         valid_food = 0;
         while(!valid_food){
             game->food = (Position){rand() % GRID_WIDTH, rand() % GRID_HEIGHT};
@@ -126,7 +130,7 @@ void update_game(SnakeGame* game){
 }
 
 
-
+// Same as update game but walls kill you here used for simplicity in simulation
 void update_game_with_walls(SnakeGame* game){
     game->direction = game->nextDirection;
     game->steps_alive++;
@@ -194,8 +198,6 @@ void update_game_with_walls(SnakeGame* game){
 
 
 
-
-
 void DrawCenteredText(char* text, int size, Color color){
     int text_width = MeasureText(text, size);
 
@@ -213,8 +215,9 @@ void draw_game(SnakeGame* game){
     DrawRectangleRec(bottom, BROWN);
 
     
-    // Draw the snake
+    // Draw the snake head
     DrawRectangle(game->head.x * GRID_SIZE, game->head.y * GRID_SIZE, GRID_SIZE, GRID_SIZE, YELLOW);
+    // Snake body
     for(int i = 0; i < game->snake_size; i++){
         int posX = game->body[i].x * GRID_SIZE;
         int posY = game->body[i].y * GRID_SIZE;
@@ -245,7 +248,7 @@ void draw_game(SnakeGame* game){
     }
 }
 
-void handle_inputs(SnakeGame* game){
+void handle_inputs(SnakeGame* game, unsigned int* seed){
     // UP
     if(IsKeyPressed(KEY_UP) && game->direction != 3){
         game->nextDirection = 1;
@@ -265,7 +268,7 @@ void handle_inputs(SnakeGame* game){
 
     // Reset
     if(IsKeyPressed(KEY_R)){
-        start_game(game);
+        start_game(game, seed);
     }
 }
 

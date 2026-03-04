@@ -39,7 +39,7 @@ typedef struct {
 
 Rectangle* GetBoxes();
 
-void start_game(SnakeGame* game);
+void start_game(SnakeGame* game, unsigned int* seed);
 bool add_head(int x, int y, int* snakeSize, Position* snake_list);
 void update_game(SnakeGame* game);
 void update_game_with_walls(SnakeGame* game);
@@ -48,7 +48,7 @@ void DrawCenteredText(char* text, int size, Color color);
 
 
 void draw_game(SnakeGame* game);
-void handle_inputs(SnakeGame* game);
+void handle_inputs(SnakeGame* game, unsigned int* seed);
 
 
 #endif

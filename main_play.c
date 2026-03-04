@@ -12,12 +12,13 @@
 
 int main(){
     srand(time(NULL));
+    unsigned int seed = time(NULL);
     float timer = 0.0f;
 
 
     SnakeGame game;
     game.body = malloc(MAX_SNAKE * sizeof(Position));
-    start_game(&game);
+    start_game(&game, &seed);
 
     Rectangle* possible_poses = GetBoxes();
 
@@ -32,7 +33,7 @@ int main(){
         float dt = GetFrameTime();
         timer += dt;
 
-        handle_inputs(&game);
+        handle_inputs(&game, &seed);
 
         if (!game.lost && !game.won && timer >= (1 / game.move_speed)){
             update_game(&game);

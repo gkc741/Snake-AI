@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "time.h"
 #include "train.h"
 #include "gui.h"
 
@@ -29,6 +30,7 @@ int snake_forward_pass(float* input, layer* hidden_layer, layer* output_layer){
     float output_out[OUTPUT_SIZE];
 
     float temp;
+    // Hidden layer 
     for(int j = 0; j < hidden_layer->nr_of_neurons; j++){
         temp = hidden_layer->bias[j];
         for(int i = 0; i < hidden_layer->in_size; i++){
@@ -46,6 +48,7 @@ int snake_forward_pass(float* input, layer* hidden_layer, layer* output_layer){
         output_out[i] = temp;
     }
 
+    // Argmax of directions logits
     int direction = 0;
     float max_logit = output_out[0];
     for(int i = 0; i < OUTPUT_SIZE; i++){
@@ -54,6 +57,7 @@ int snake_forward_pass(float* input, layer* hidden_layer, layer* output_layer){
             direction = i;
         }
     }
+    // Because i made it so it takes 1-4 but here its 0-3 indexd
     return direction + 1;
 }
 
@@ -96,9 +100,8 @@ void get_sensors(SnakeGame* game, float* sensors){
                     self_found = 1.0f;
                 }
             }
-
-            // wall check is automatic with steps++
         }
+        // wall check is automatic with steps++
         sensors[i * 3 + 0] = 1.0f / steps;  // small value is far away wall, small value is close wall
         sensors[i * 3 + 1] = food_found;
         sensors[i * 3 + 2] = self_found;
@@ -141,19 +144,23 @@ void genome_to_layers(Genome* g, layer* hidden, layer* output){
 //     g->fitness = game->score * game->snake_size + game->steps_alive;
 // }
 
+// New fitness function, really the core of the training but i cant figure out a really great one
 void calc_fitness(SnakeGame* game, Genome* g){
     if(game->score < 10){
-        g->fitness = game->steps_alive * pow(2, game->score);
+        g->fitness = game->score * game->score * pow(2, game->score) + game->steps_alive;
     } else {
-        g->fitness = game->steps_alive * pow(2, 10) * (game->score - 9);
+        g->fitness = game->score * game->score * pow(2, 10) * (game->score - 9) + game->steps_alive;
     }
 }
 
+
 void simulate_step(SnakeGame* game, layer* hidden, layer* output, float* sensors, int* starvation_steps, int* previous_score){
+    // Get sensors, figure out next direction and update the game
     get_sensors(game, sensors);
     game->nextDirection = snake_forward_pass(sensors, hidden, output);
     update_game_with_walls(game);
 
+    // Figure out if its wasting time
     if(game->score > *previous_score){
         *previous_score = game->score;
         *starvation_steps = 0;
@@ -161,14 +168,15 @@ void simulate_step(SnakeGame* game, layer* hidden, layer* output, float* sensors
         (*starvation_steps)++;
     }
 
-    if(*starvation_steps > 50 + game->snake_size * 20){
+    if(*starvation_steps > 100 + game->snake_size * 25){
         game->lost = 1;
     }
 }
 
 
-void simulate(SnakeGame* game, Genome* g, layer* hidden, layer* ouptut, float* sensors){
-    start_game(game);
+void simulate(SnakeGame* game, Genome* g, layer* hidden, layer* ouptut, float* sensors, unsigned int* seed){
+    // Start the game, make the genomes to layers
+    start_game(game, seed);
 
     genome_to_layers(g, hidden, ouptut);
 
@@ -177,10 +185,11 @@ void simulate(SnakeGame* game, Genome* g, layer* hidden, layer* ouptut, float* s
 
     while(!game->lost && !game->won && game->steps_alive < 200 + game->snake_size * 100){
         simulate_step(game, hidden, ouptut, sensors, &starvation_steps, &previous_score);
-
     } 
+    
     calc_fitness(game, g);
 }
+
 
 int comp(const void *a, const void *b) {
     Genome *g1 = (Genome *)a;
@@ -196,17 +205,22 @@ void sort_by_fitness(Genome* population){
 }
 
 
-Genome breed_child(Genome population[], int retention_percent){
+Genome breed_child(Genome population[], int elite_count){
+    // Initialize kid
     Genome offspring;
-    int elite_count = POP_SIZE / retention_percent;
     if(elite_count < 2) elite_count = 2;
+    // Get a random index in the top whatever / elite section
     int prt1_inx = rand() % elite_count;
     int prt2_inx = rand() % elite_count;
+    // Make sure theyre different
     while(prt2_inx == prt1_inx){
         prt2_inx = rand() % elite_count;
     }
+    // The parents
     Genome parent_1 = population[prt1_inx];
     Genome parent_2 = population[prt2_inx];
+    
+    // Get the weights of the parents randomly and assing it to the kid
     for(int i = 0; i < GENOME_SIZE; i++){
         if(rand() % 2 == 0){
             offspring.weights[i] = parent_1.weights[i];
@@ -227,17 +241,19 @@ void mutate(Genome* offspring, float mutation_rate, float mutation_strength){
         if((rand() / (float)RAND_MAX) < mutation_rate){
             offspring->weights[i] += ((rand() / (float)RAND_MAX) * 2.0f - 1.0f) * mutation_strength;
         }
-        if(offspring->weights[i] > 1.0f) offspring->weights[i] = 1.0f;
-        if(offspring->weights[i] < -1.0f) offspring->weights[i] = -1.0f;
+        // if(offspring->weights[i] > 1.0f) offspring->weights[i] = 1.0f;
+        // if(offspring->weights[i] < -1.0f) offspring->weights[i] = -1.0f;
     } 
 }
 
 
 void simulate_with_gui(SnakeGame* game, Genome* g, layer* hidden, layer* output, float* sensors){
+    int targetFPS = 20;
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Best Snake");
-    SetTargetFPS(30);
+    SetTargetFPS(targetFPS);
 
-    start_game(game);
+    unsigned int seed = time(NULL);
+    start_game(game, &seed);
     genome_to_layers(g, hidden, output);
 
     int starvation_steps = 0;
@@ -246,6 +262,10 @@ void simulate_with_gui(SnakeGame* game, Genome* g, layer* hidden, layer* output,
      while(!WindowShouldClose() && !game->lost && !game->won && game->steps_alive < 200 + game->snake_size * 100){
         simulate_step(game, hidden, output, sensors, &starvation_steps, &previous_score);
 
+        if(IsKeyPressed(KEY_S)){
+            targetFPS = (targetFPS == 20) ? 120 : 20;
+            SetTargetFPS(targetFPS);
+        }
         BeginDrawing();
         ClearBackground(BLACK);
         draw_game(game);

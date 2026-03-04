@@ -5,7 +5,7 @@
 #include "gui.h"
 
 #define INPUT_SIZE 24
-#define HIDDEN_SIZE 32
+#define HIDDEN_SIZE 64
 #define OUTPUT_SIZE 4 
 
 #define GENOME_SIZE (INPUT_SIZE * HIDDEN_SIZE) + HIDDEN_SIZE + (HIDDEN_SIZE * OUTPUT_SIZE) + OUTPUT_SIZE
@@ -41,7 +41,7 @@ Genome create_random_genome();
 void genome_to_layers(Genome* g, layer* hidden, layer* output);
 void calc_fitness(SnakeGame* game, Genome* g);
 void simulate_step(SnakeGame* game, layer* hidden, layer* output, float* sensors, int* starvation_steps, int* previous_score);
-void simulate(SnakeGame* game, Genome* g, layer* hidden, layer* output, float* sensors);
+void simulate(SnakeGame* game, Genome* g, layer* hidden, layer* ouptut, float* sensors, unsigned int* seed);
 
 
 int comp(const void *a, const void *b);
