@@ -270,25 +270,3 @@ void handle_inputs(SnakeGame* game){
 }
 
 
-void simulate_with_gui(SnakeGame* game, Genome* g, layer* hidden, layer* output, float* sensors){
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Best Snake");
-    SetTargetFPS(30);
-
-    start_game(game);
-    genome_to_layers(g, hidden, output);
-
-    int starvation_steps = 0;
-    int previous_score = game->score;
-
-     while(!WindowShouldClose() && !game->lost && !game->won && game->steps_alive < 200 + game->snake_size * 100){
-        simulate_step(game, hidden, output, sensors, &starvation_steps, &previous_score);
-
-        BeginDrawing();
-        ClearBackground(BLACK);
-        draw_game(game);
-        EndDrawing();
-    }
-    
-    calc_fitness(game, g);
-    CloseWindow();
-}
