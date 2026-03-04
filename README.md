@@ -46,12 +46,14 @@ Snake/
 
 Rewards both eating food and survival time:
 
-$$\text{fitness}(s) = \begin{cases}
-\text{steps_alive} \times 2^s & \text{if } s < 10 \\
-\text{steps_alive} \times 2^{10} \times (s - 9) & \text{if } s \geq 10
+$$\text{fitness} = \begin{cases}
+t \cdot 2^s & \text{if } s < 10 \\
+t \cdot 2^{10} \cdot (s - 9) & \text{if } s \geq 10
 \end{cases}$$
 
-where $s$ = score
+where:
+- $t$ = steps alive
+- $s$ = score
 
 ## Results
 
