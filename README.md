@@ -5,6 +5,7 @@ A Snake game implemented in C using raylib with an AI agent trained through neur
 ## Overview
 
 This project combines two main components:
+
 - **Game**: A classic Snake game rendered with raylib
 - **AI Agent**: Trained using neuroevolution (genetic algorithms with fixed-topology neural network)
 
@@ -25,6 +26,7 @@ Snake/
 ## How It Works
 
 ### Neuroevolution Algorithm
+
 1. **Initialization**: Create a population of random neural networks
 2. **Fitness Evaluation**: Each network plays Snake and receives a fitness score
 3. **Selection**: Best performers are selected for breeding
@@ -32,6 +34,7 @@ Snake/
 5. **Repeat**: New generation replaces old population
 
 ### Neural Network
+
 - **Input**: 24 sensors (8 directions × 3 values per direction)
   - Distance to wall
   - Food detection
@@ -40,23 +43,32 @@ Snake/
 - **Output**: 4 neurons (up, right, down, left)
 
 ### Fitness Function
+
 Rewards both eating food and survival time:
-$$\text{fitness} = \text{steps\_alive} \times 2^{\text{score}}$$
+
+$$\text{fitness}(s) = \begin{cases}
+\text{steps_alive} \times 2^s & \text{if } s < 10 \\
+\text{steps_alive} \times 2^{10} \times (s - 9) & \text{if } s \geq 10
+\end{cases}$$
+
+where $s$ = score
 
 ## Results
 
 The agent learns to:
+
 - Navigate towards food
 - Avoid walls and its own body
 - Play increasingly longer games
 
 ## Technologies
+
 - **Language**: C
 - **Graphics**: Raylib
 - **ML**: Genetic Algorithm, Neuroevolution
-- **Platform**: Windows, Linux, macOS (with Raylib)
 
 ## Future Improvements
+
 - Implement NEAT (topological evolution)
 - Add speciation for better diversity
 - Improve fitness function for corner navigation
